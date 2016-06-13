@@ -40,7 +40,7 @@ class vmmStorageVolume(vmmLibvirtObject):
     ##########################
 
     def _conn_tick_poll_param(self):
-        return None
+        return "pollpool"
     def class_name(self):
         return "volume"
 
@@ -59,6 +59,7 @@ class vmmStorageVolume(vmmLibvirtObject):
         # Deliberately empty
         ignore = stats_update
     def _init_libvirt_state(self):
+        self.tick()
         self.ensure_latest_xml()
 
 
@@ -134,6 +135,8 @@ class vmmStoragePool(vmmLibvirtObject):
         return self._backend.XMLDesc(flags)
     def _define(self, xml):
         return self.conn.define_pool(xml)
+    def _using_events(self):
+        return self.conn.using_storage_pool_events
     def _check_supports_isactive(self):
         return self.conn.check_support(
             self.conn.SUPPORT_POOL_ISACTIVE, self._backend)
