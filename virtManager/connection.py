@@ -809,6 +809,20 @@ class vmmConnection(vmmGObject):
 
         self.schedule_priority_tick(pollnodedev=True, force=True)
 
+    def _node_device_update_event(self, conn, dev,
+                                  event, reason, userdata):
+        ignore = conn
+        ignore = userdata
+
+        name = dev.name()
+        logging.debug("node device update event: device=%s event=%s "
+            "reason=%s", name, event, reason)
+
+        obj = self.get_nodedev(name)
+
+        if obj:
+            self.idle_add(obj.recache_from_event_loop)
+
     def _add_conn_events(self):
         if not self.check_support(support.SUPPORT_CONN_WORKING_XEN_EVENTS):
             return
@@ -893,6 +907,21 @@ class vmmConnection(vmmGObject):
             self.using_network_events = False
             logging.debug("Error registering node device events: %s", e)
 
+
+        def _add_node_device_update_event(eventid, typestr):
+            if not self.using_node_device_events:
+                return
+            try:
+                self._node_device_cb_ids.append(
+                    self.get_backend().nodeDeviceEventRegisterAny(
+                    None, eventid, self._node_device_update_event, None))
+            except Exception, e:
+                logging.debug("Error registering node device %s event: %s",
+                    typestr, e)
+
+        _add_node_device_update_event(
+            getattr(libvirt, "VIR_NODE_DEVICE_EVENT_ID_UPDATE", 1),
+            "update")
 
     ######################################
     # Connection closing/opening methods #
