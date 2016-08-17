@@ -131,7 +131,12 @@ class vmmStoragePool(vmmLibvirtObject):
         return "pool"
 
     def _XMLDesc(self, flags):
-        return self._backend.XMLDesc(flags)
+        try:
+            return self._backend.XMLDesc(flags)
+        except Exception, e:
+            logging.debug("XMLDesc for pool failed: %s", e)
+            raise
+
     def _define(self, xml):
         return self.conn.define_pool(xml)
     def _using_events(self):
